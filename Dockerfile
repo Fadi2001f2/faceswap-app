@@ -21,4 +21,4 @@ RUN python -c "import urllib.request, os; \
     os.path.exists('backend/models/GFPGANv1.4.pth') or urllib.request.urlretrieve('https://github.com/TencentARC/GFPGAN/releases/download/v1.3.0/GFPGANv1.4.pth', 'backend/models/GFPGANv1.4.pth')"
 
 EXPOSE 7860
-CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "7860"]
+CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "7860"] 
