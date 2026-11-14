@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FaceSwap AI — تبديل الوجوه في الفيديو</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0b10; --panel:#12141c; --panel2:#181b26; --line:#262a38;
+  --text:#e8eaf2; --muted:#8a90a6; --accent:#7c5cff; --accent2:#22d3ee;
+  --ok:#22c55e; --err:#ef4444; --radius:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Tajawal',system-ui,sans-serif;background:
+  radial-gradient(1200px 600px at 85% -10%,#7c5cff22,transparent 60%),
+  radial-gradient(900px 500px at 0% 110%,#22d3ee18,transparent 60%),var(--bg);
+  color:var(--text);min-height:100vh;line-height:1.6}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 60px}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:28px}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:grid;place-items:center;font-weight:800;font-size:20px}
+.brand h1{font-size:22px;font-weight:800}
+.brand p{color:var(--muted);font-size:13px}
+.server{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 10px}
+.server input{background:transparent;border:0;color:var(--text);width:240px;font:inherit;font-size:13px;direction:ltr;outline:none}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--muted)}
+.dot.on{background:var(--ok);box-shadow:0 0 8px var(--ok)} .dot.off{background:var(--err)}
+.btn-s{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:4px 10px;cursor:pointer;font:inherit;font-size:12px}
+
+.grid{display:grid;grid-template-columns:1.35fr 1fr;gap:20px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}.server input{width:160px}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px}
+.card h2{font-size:16px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.step{width:24px;height:24px;border-radius:7px;background:var(--panel2);border:1px solid var(--line);display:grid;place-items:center;font-size:12px;color:var(--accent2)}
+
+.drops{display:grid;grid-template-columns:1.4fr 1fr;gap:14px}
+@media(max-width:560px){.drops{grid-template-columns:1fr}}
+.drop{position:relative;border:2px dashed var(--line);border-radius:14px;min-height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:16px;cursor:pointer;transition:.2s;background:var(--panel2);overflow:hidden}
+.drop:hover,.drop.drag{border-color:var(--accent);background:#7c5cff12}
+.drop .ic{font-size:34px;margin-bottom:6px}
+.drop b{font-size:15px} .drop small{color:var(--muted);font-size:12px}
+.drop input{display:none}
+.drop video,.drop img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
+.drop.has .ph{display:none}
+.drop .x{position:absolute;top:8px;left:8px;z-index:3;background:#000a;border:1px solid #fff3;color:#fff;border-radius:8px;padding:2px 9px;cursor:pointer;display:none}
+.drop.has .x{display:block}
+.meta{font-size:12px;color:var(--muted);margin-top:8px;min-height:18px;direction:ltr;text-align:right}
+
+.ctrl{margin-bottom:18px}
+.ctrl .row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:14px}
+.ctrl .val{color:var(--accent2);font-weight:700;direction:ltr;font-size:13px}
+.ctrl .hint{font-size:12px;color:var(--muted)}
+input[type=range]{width:100%;accent-color:var(--accent);height:4px}
+.switch{position:relative;width:46px;height:26px;flex-shrink:0}
+.switch input{opacity:0;width:0;height:0}
+.switch span{position:absolute;inset:0;background:var(--line);border-radius:99px;cursor:pointer;transition:.2s}
+.switch span:before{content:"";position:absolute;width:20px;height:20px;top:3px;right:3px;background:#fff;border-radius:50%;transition:.2s}
+.switch input:checked+span{background:var(--accent)}
+.switch input:checked+span:before{transform:translateX(-20px)}
+.sub{padding-inline-start:12px;border-inline-start:2px solid var(--line);margin-top:10px}
+.consent{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--muted);background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px;margin:6px 0 16px}
+.consent input{margin-top:4px;accent-color:var(--accent);width:16px;height:16px;flex-shrink:0}
+
+.go{width:100%;border:0;border-radius:12px;padding:14px;font:inherit;font-size:16px;font-weight:800;color:#fff;cursor:pointer;background:linear-gradient(135deg,var(--accent),#5b8cff);transition:.2s}
+.go:disabled{opacity:.4;cursor:not-allowed}
+.go:not(:disabled):hover{transform:translateY(-1px);box-shadow:0 8px 24px #7c5cff55}
+
+.progress{margin-top:20px;display:none}
+.progress.show{display:block}
+.bar{height:12px;background:var(--panel2);border:1px solid var(--line);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .4s;position:relative}
+.bar i:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,#fff4,transparent);animation:sh 1.4s infinite}
+@keyframes sh{from{transform:translateX(100%)}to{transform:translateX(-100%)}}
+.pstats{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:10px;font-size:13px;color:var(--muted)}
+.pstats b{color:var(--text)}
+.status{margin-top:8px;font-size:14px}
+.status.err{color:var(--err)} .status.ok{color:var(--ok)}
+
+.result{margin-top:20px;display:none}
+.result.show{display:block}
+.tabs{display:flex;gap:6px;margin-bottom:12px;background:var(--panel2);padding:4px;border-radius:10px;width:fit-content}
+.tabs button{background:transparent;border:0;color:var(--muted);padding:6px 14px;border-radius:8px;cursor:pointer;font:inherit;font-size:13px}
+.tabs button.on{background:var(--accent);color:#fff}
+.compare{position:relative;border-radius:14px;overflow:hidden;background:#000;aspect-ratio:16/9;user-select:none}
+.compare video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.compare .top{clip-path:inset(0 0 0 50%)}
+.handle{position:absolute;top:0;bottom:0;left:50%;width:3px;background:#fff;transform:translateX(-50%);cursor:ew-resize;z-index:2}
+.handle:after{content:"⇆";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:36px;height:36px;border-radius:50%;background:#fff;color:#000;display:grid;place-items:center;font-size:16px;box-shadow:0 2px 12px #0008}
+.lbl{position:absolute;top:10px;z-index:2;background:#000a;padding:2px 10px;border-radius:8px;font-size:12px}
+.lbl.l{left:10px}.lbl.r{right:10px}
+.side{display:none;grid-template-columns:1fr 1fr;gap:10px}
+.side video{width:100%;border-radius:12px;background:#000}
+.side figcaption{font-size:12px;color:var(--muted);text-align:center;margin-top:4px}
+.controls{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+.controls button,.controls a{flex:1;min-width:140px;text-align:center;text-decoration:none;border-radius:10px;padding:11px;font:inherit;font-weight:700;cursor:pointer;border:1px solid var(--line);background:var(--panel2);color:var(--text)}
+.controls a.dl{background:var(--ok);border-color:var(--ok);color:#03130a}
+footer{text-align:center;color:var(--muted);font-size:12px;margin-top:30px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="logo">AI</div>
+      <div><h1>FaceSwap AI</h1><p>تبديل الوجوه في الفيديو بالذكاء الاصطناعي</p></div>
+    </div>
+    <div class="server" title="عنوان الخادم (اتركه فارغاً إذا كانت الواجهة تُخدَم من نفس الخادم)">
+      <span class="dot" id="dot"></span>
+      <input id="apiUrl" placeholder="https://xxxx.ngrok-free.app">
+      <button class="btn-s" id="ping">اتصال</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <!-- ======== Uploads + Result ======== -->
+    <section class="card">
+      <h2><span class="step">1</span> رفع الملفات</h2>
+      <div class="drops">
+        <label class="drop" id="dropVideo">
+          <input type="file" accept="video/mp4,video/*" id="fileVideo">
+          <div class="ph"><div class="ic">🎬</div><b>اسحب الفيديو هنا</b><br><small>أو اضغط للاختيار — MP4</small></div>
+          <video id="prevVideo" controls muted playsinline></video>
+          <button class="x" data-clear="video" type="button">✕</button>
+        </label>
+        <label class="drop" id="dropFace">
+          <input type="file" accept="image/jpeg,image/png,image/webp" id="fileFace">
+          <div class="ph"><div class="ic">🙂</div><b>صورة الوجه</b><br><small>JPG / PNG — وجه واضح ومواجه</small></div>
+          <img id="prevFace" alt="">
+          <button class="x" data-clear="face" type="button">✕</button>
+        </label>
+      </div>
+      <div class="meta" id="metaVideo"></div>
+
+      <div class="progress" id="progress">
+        <h2 style="margin-top:6px"><span class="step">3</span> المعالجة</h2>
+        <div class="bar"><i id="barFill"></i></div>
+        <div class="pstats">
+          <span>النسبة: <b id="pPct">0%</b></span>
+          <span>الإطارات: <b id="pFrames">0 / 0</b></span>
+          <span>السرعة: <b id="pFps">—</b></span>
+          <span>المتبقي: <b id="pEta">—</b></span>
+        </div>
+        <div class="status" id="pStatus"></div>
+      </div>
+
+      <div class="result" id="result">
+        <h2 style="margin-top:6px"><span class="step">4</span> النتيجة والمقارنة</h2>
+        <div class="tabs">
+          <button class="on" data-mode="slider">مقارنة بالسحب</button>
+          <button data-mode="side">جنباً إلى جنب</button>
+          <button data-mode="result">النتيجة فقط</button>
+        </div>
+        <div class="compare" id="cmp">
+          <video id="cOrig" muted playsinline></video>
+          <video id="cRes" class="top" playsinline></video>
+          <div class="handle" id="handle"></div>
+          <span class="lbl l">الأصل</span><span class="lbl r">النتيجة</span>
+        </div>
+        <div class="side" id="side">
+          <figure><video id="sOrig" muted playsinline></video><figcaption>الأصل</figcaption></figure>
+          <figure><video id="sRes" playsinline></video><figcaption>النتيجة</figcaption></figure>
+        </div>
+        <div class="controls">
+          <button id="playBoth">▶ تشغيل</button>
+          <a class="dl" id="dlBtn" href="#">⬇ تحميل MP4</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======== Settings ======== -->
+    <aside class="card">
+      <h2><span class="step">2</span> الإعدادات المتقدمة</h2>
+
+      <div class="ctrl">
+        <div class="row"><span>تحسين دقة الوجه (GFPGAN)</span>
+          <label class="switch"><input type="checkbox" id="enhance" checked><span></span></label></div>
+        <div class="hint">يزيل التشويش ويرفع وضوح الملامح — أبطأ قليلاً</div>
+        <div class="sub" id="enhSub">
+          <div class="row"><span>قوة التحسين</span><span class="val" id="vEnh">80%</span></div>
+          <input type="range" id="enhance_strength" min="0" max="100" value="80">
+        </div>
+      </div>
+
+      <div class="ctrl">
+        <div class="row"><span>قوة الدمج</span><span class="val" id="vBlend">100%</span></div>
+        <input type="range" id="blend" min="0" max="100" value="100">
+        <div class="hint">أقل = يظهر جزء من الوجه الأصلي</div>
+      </div>
+
+      <div class="ctrl">
+        <div class="row"><span>تطابق لون البشرة والإضاءة</span><span class="val" id="vColor">50%</span></div>
+        <input type="range" id="color_match" min="0" max="100" value="50">
+        <div class="hint">ينقل درجة اللون والإضاءة من الفيديو إلى الوجه الجديد</div>
+      </div>
+
+      <div class="ctrl">
+        <div class="row"><span>تبديل جميع الوجوه في المشهد</span>
+          <label class="switch"><input type="checkbox" id="all_faces"><span></span></label></div>
+        <div class="hint">معطّل = الوجه الأكبر فقط</div>
+      </div>
+
+      <div class="ctrl">
+        <div class="row"><span>علامة "AI Generated"</span>
+          <label class="switch"><input type="checkbox" id="watermark" checked><span></span></label></div>
+      </div>
+
+      <label class="consent">
+        <input type="checkbox" id="consent">
+        <span>أؤكد أنني أملك موافقة صاحب الوجه وصاحب الفيديو، وأنني لن أستخدم النتيجة للتضليل أو الانتحال أو أي محتوى مسيء.</span>
+      </label>
+
+      <button class="go" id="go" disabled>🚀 ابدأ تبديل الوجه</button>
+    </aside>
+  </div>
+
+  <footer>InsightFace · inswapper_128 · GFPGAN · OpenCV · FastAPI</footer>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const state = { video:null, face:null, job:null, timer:null, origURL:null };
+
+/* ---------- server url ---------- */
+const apiInput = $('#apiUrl');
+try { apiInput.value = localStorage.getItem('fs_api') || ''; } catch(e){}
+const API = () => (apiInput.value.trim() || '').replace(/\/+$/,'');
+const HDR = { 'ngrok-skip-browser-warning':'1' };
+apiInput.addEventListener('change', () => { try{localStorage.setItem('fs_api', apiInput.value.trim())}catch(e){} ping(); });
+$('#ping').onclick = ping;
+async function ping(){
+  const d = $('#dot'); d.className = 'dot';
+  try{
+    const r = await fetch(API()+'/api/health',{headers:HDR});
+    const j = await r.json();
+    d.className = 'dot on';
+    d.title = `متصل — GPU: ${j.gpu?'نعم':'لا'} — النماذج: ${j.engine_loaded?'محمّلة':'قيد التحميل'}`;
+  }catch(e){ d.className='dot off'; d.title='غير متصل'; }
+}
+ping();
+
+/* ---------- drag & drop ---------- */
+function setupDrop(zoneSel, inputSel, kind){
+  const z = $(zoneSel), inp = $(inputSel);
+  ['dragenter','dragover'].forEach(ev => z.addEventListener(ev, e => { e.preventDefault(); z.classList.add('drag'); }));
+  ['dragleave','drop'].forEach(ev => z.addEventListener(ev, e => { e.preventDefault(); z.classList.remove('drag'); }));
+  z.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if(f) setFile(kind, f); });
+  inp.addEventListener('change', () => inp.files[0] && setFile(kind, inp.files[0]));
+}
+setupDrop('#dropVideo','#fileVideo','video');
+setupDrop('#dropFace','#fileFace','face');
+
+function setFile(kind, f){
+  if(kind==='video'){
+    if(!f.type.startsWith('video/')) return alert('الرجاء اختيار ملف فيديو');
+    state.video = f;
+    if(state.origURL) URL.revokeObjectURL(state.origURL);
+    state.origURL = URL.createObjectURL(f);
+    const v = $('#prevVideo'); v.src = state.origURL;
+    v.onloadedmetadata = () => {
+      $('#metaVideo').textContent = `${f.name} · ${(f.size/1048576).toFixed(1)}MB · ${v.videoWidth}×${v.videoHeight} · ${v.duration.toFixed(1)}s`;
+    };
+    $('#dropVideo').classList.add('has');
+  } else {
+    if(!/image\/(jpeg|png|webp)/.test(f.type)) return alert('الصورة يجب أن تكون JPG أو PNG');
+    state.face = f;
+    $('#prevFace').src = URL.createObjectURL(f);
+    $('#dropFace').classList.add('has');
+  }
+  validate();
+}
+document.querySelectorAll('[data-clear]').forEach(b => b.addEventListener('click', e => {
+  e.preventDefault(); e.stopPropagation();
+  const k = b.dataset.clear; state[k] = null;
+  if(k==='video'){ $('#prevVideo').removeAttribute('src'); $('#dropVideo').classList.remove('has'); $('#metaVideo').textContent=''; $('#fileVideo').value=''; }
+  else { $('#prevFace').removeAttribute('src'); $('#dropFace').classList.remove('has'); $('#fileFace').value=''; }
+  validate();
+}));
+
+/* ---------- controls ---------- */
+const bindRange = (id, out) => { const r=$('#'+id); const f=()=>$(out).textContent=r.value+'%'; r.oninput=f; f(); };
+bindRange('enhance_strength','#vEnh'); bindRange('blend','#vBlend'); bindRange('color_match','#vColor');
+$('#enhance').onchange = e => $('#enhSub').style.opacity = e.target.checked ? 1 : .35;
+$('#consent').onchange = validate;
+function validate(){ $('#go').disabled = !(state.video && state.face && $('#consent').checked) || !!state.timer; }
+
+/* ---------- submit ---------- */
+$('#go').onclick = async () => {
+  const fd = new FormData();
+  fd.append('video', state.video); fd.append('face', state.face);
+  fd.append('enhance', $('#enhance').checked);
+  fd.append('enhance_strength', $('#enhance_strength').value/100);
+  fd.append('blend', $('#blend').value/100);
+  fd.append('color_match', $('#color_match').value/100);
+  fd.append('all_faces', $('#all_faces').checked);
+  fd.append('watermark', $('#watermark').checked);
+  fd.append('consent', $('#consent').checked);
+
+  $('#result').classList.remove('show');
+  $('#progress').classList.add('show');
+  setProgress({progress:0, frames_done:0, frames_total:0});
+  status('جاري رفع الملفات...');
+  $('#go').disabled = true;
+
+  // XHR لعرض نسبة الرفع
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', API()+'/api/jobs');
+  xhr.setRequestHeader('ngrok-skip-browser-warning','1');
+  xhr.upload.onprogress = e => { if(e.lengthComputable) status(`جاري الرفع... ${Math.round(e.loaded/e.total*100)}%`); };
+  xhr.onload = () => {
+    let j={}; try{ j = JSON.parse(xhr.responseText); }catch(e){}
+    if(xhr.status>=300) { status(j.detail || 'فشل الرفع', 'err'); validate(); return; }
+    state.job = j.job_id; poll();
+  };
+  xhr.onerror = () => { status('تعذّر الاتصال بالخادم — تحقق من العنوان', 'err'); validate(); };
+  xhr.send(fd);
+};
+
+function poll(){
+  clearInterval(state.timer);
+  state.timer = setInterval(async () => {
+    try{
+      const r = await fetch(`${API()}/api/jobs/${state.job}`, {headers:HDR});
+      const j = await r.json();
+      setProgress(j); status(j.message, j.status==='error'?'err':j.status==='done'?'ok':'');
+      if(j.status==='done' || j.status==='error'){
+        clearInterval(state.timer); state.timer = null; validate();
+        if(j.status==='done') showResult();
+      }
+    }catch(e){ status('انقطع الاتصال مؤقتاً... إعادة المحاولة', 'err'); }
+  }, 1000);
+}
+
+function setProgress(j){
+  const p = Math.max(0, Math.min(100, j.progress||0));
+  $('#barFill').style.width = p+'%';
+  $('#pPct').textContent = p.toFixed(1)+'%';
+  $('#pFrames').textContent = `${j.frames_done||0} / ${j.frames_total||0}`;
+  $('#pFps').textContent = j.fps_proc ? j.fps_proc+' إطار/ث' : '—';
+  $('#pEta').textContent = j.eta_sec!=null ? fmt(j.eta_sec) : '—';
+}
+const fmt = s => s<60 ? s+'ث' : `${Math.floor(s/60)}د ${s%60}ث`;
+function status(t, cls=''){ const s=$('#pStatus'); s.textContent=t||''; s.className='status '+cls; }
+
+/* ---------- result + compare ---------- */
+async function showResult(){
+  const url = `${API()}/api/jobs/${state.job}/result`;
+  // نجلب الملف كـ Blob لتجاوز صفحة تحذير ngrok
+  status('تحميل المعاينة...');
+  const blob = await (await fetch(url, {headers:HDR})).blob();
+  const resURL = URL.createObjectURL(blob);
+  ['#cRes','#sRes'].forEach(s => $(s).src = resURL);
+  ['#cOrig','#sOrig'].forEach(s => $(s).src = state.origURL);
+  const dl = $('#dlBtn'); dl.href = resURL; dl.download = `faceswap_${state.job}.mp4`;
+  $('#result').classList.add('show');
+  status('اكتملت المعالجة ✓', 'ok');
+  $('#result').scrollIntoView({behavior:'smooth'});
+}
+
+let mode = 'slider';
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.tabs button').forEach(x => x.classList.remove('on')); b.classList.add('on');
+  mode = b.dataset.mode; pauseAll();
+  $('#cmp').style.display = mode==='side' ? 'none' : 'block';
+  $('#side').style.display = mode==='side' ? 'grid' : 'none';
+  const showOrig = mode==='slider';
+  $('#cOrig').style.visibility = showOrig ? 'visible' : 'hidden';
+  $('#handle').style.display = showOrig ? 'block' : 'none';
+  document.querySelectorAll('.lbl').forEach(l => l.style.display = showOrig ? 'block' : 'none');
+  $('#cRes').style.clipPath = showOrig ? '' : 'none';
+});
+
+// سحب المقبض
+const cmp = $('#cmp'), handle = $('#handle');
+let dragging = false;
+const moveTo = x => {
+  const r = cmp.getBoundingClientRect();
+  const pct = Math.max(0, Math.min(100, (x - r.left) / r.width * 100));
+  handle.style.left = pct+'%';
+  $('#cRes').style.clipPath = `inset(0 0 0 ${pct}%)`;
+};
+cmp.addEventListener('pointerdown', e => { if(mode!=='slider')return; dragging = true; cmp.setPointerCapture(e.pointerId); moveTo(e.clientX); });
+cmp.addEventListener('pointermove', e => dragging && moveTo(e.clientX));
+cmp.addEventListener('pointerup', () => dragging = false);
+
+// تشغيل متزامن
+const pair = () => mode==='side' ? [$('#sRes'), $('#sOrig')] : [$('#cRes'), $('#cOrig')];
+function pauseAll(){ ['#cRes','#cOrig','#sRes','#sOrig'].forEach(s => $(s).pause()); $('#playBoth').textContent='▶ تشغيل'; }
+$('#playBoth').onclick = () => {
+  const [a, b] = pair();
+  if(a.paused){ b.currentTime = a.currentTime; a.play(); if(mode!=='result') b.play(); $('#playBoth').textContent='⏸ إيقاف'; }
+  else pauseAll();
+};
+['#cRes','#sRes'].forEach(s => {
+  $(s).addEventListener('timeupdate', () => {
+    const [a, b] = pair();
+    if(Math.abs(a.currentTime - b.currentTime) > 0.15) b.currentTime = a.currentTime;
+  });
+  $(s).addEventListener('ended', pauseAll);
+});
+</script>
+</body>
+</html>
