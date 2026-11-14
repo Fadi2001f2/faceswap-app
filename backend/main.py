@@ -18,7 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from backend.engine import FaceSwapEngine, SwapOptions
+from .engine import FaceSwapEngine, SwapOptions
 
 BASE = Path(__file__).resolve().parent
 MODELS_DIR = Path(os.getenv("MODELS_DIR", BASE / "models"))
